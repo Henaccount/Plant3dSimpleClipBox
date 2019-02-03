@@ -2,19 +2,17 @@
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
-using System.Linq;
-using System.Xml.Linq;
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using AcadApp = Autodesk.AutoCAD.ApplicationServices.Application;
 using System.Collections.Generic;
-using Autodesk.AutoCAD.Windows;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.Colors;
 using Autodesk.ProcessPower.ProjectManager;
 
 [assembly: CommandClass(typeof(ClipBox.Program))]
+
+//commands: selectlast, clipping, prepareBox, loadRequiredXrefs <path>
+
 
 namespace ClipBox
 {
@@ -67,7 +65,7 @@ namespace ClipBox
 
                     if (objIdArray.Length == 0)
                     {
-                        createBox();
+                        createBox(new Point3d(1,1,1));
                     }
                     else if (objIdArray.Length > 1)
                     {
@@ -203,7 +201,7 @@ namespace ClipBox
 
                 if (selRes.Status != PromptStatus.OK)
                 {
-                    createBox();
+                    createBox(new Point3d(1,1,1));
                     selRes = Helper.oEditor.SelectAll(filter);
                 }
 
@@ -219,11 +217,8 @@ namespace ClipBox
                 {
 
 
-                    Entity clipbox = tr.GetObject(objIdArray[0], OpenMode.ForWrite) as Entity;
-                    Point3d clipboxmid = midpoint(clipbox);
-                    double cblenD = lenDiagonal(clipbox);
-                    Point3d elemsmid = new Point3d();
-                    double lenD = 1.0;
+                    Solid3d clipbox = tr.GetObject(objIdArray[0], OpenMode.ForWrite) as Solid3d;
+                
 
                     if (objIdArrayUser.Length == 0)
                     {
@@ -234,7 +229,7 @@ namespace ClipBox
                         else
                             ShowHideBox(false);
                     }
-                    else if (objIdArrayUser.Length == 1)
+                    else if (objIdArrayUser.Length == 1 || objIdArrayUser.Length == 2)
                     {
 
                         if (ShowHideBox(true))
@@ -244,17 +239,26 @@ namespace ClipBox
                         else
                         {
                             Entity entelem = tr.GetObject(objIdArrayUser[0], OpenMode.ForRead) as Entity;
-                            elemsmid = midpoint(entelem);
-                            lenD = lenDiagonal(entelem);
-                            Vector3d vto = clipboxmid.GetVectorTo(elemsmid);
-                            clipbox.TransformBy(Matrix3d.Displacement(vto));
-                            clipbox.TransformBy(Matrix3d.Scaling(lenD / cblenD, elemsmid));
+                            Entity entelem2 = null;
+                            if (objIdArrayUser.Length == 2)
+                            {
+                                entelem2 = tr.GetObject(objIdArrayUser[1], OpenMode.ForRead) as Entity;
+                            }
+                            Point3d elemsmid = midpoint(entelem, entelem2);
+                            Vector3d tomid = elemsmid.GetAsVector();
+                            Point3d s = getScales(entelem, entelem2);
+                            clipbox.Erase();
+                            createBox(s);
+                            selRes = Helper.oEditor.SelectAll(filter);
+                            objIdArray = selRes.Value.GetObjectIds();
+                            clipbox = tr.GetObject(objIdArray[0], OpenMode.ForWrite) as Solid3d;                        
+                            clipbox.TransformBy(Matrix3d.Displacement(tomid));                      
                         }
 
                     }
                     else
                     {
-                        Helper.oEditor.WriteMessage("\nnot possible to select more than 1 elements for this command..\n");
+                        Helper.oEditor.WriteMessage("\nnot possible to select more than 2 elements for this command..\n");
                     }
 
 
@@ -264,15 +268,16 @@ namespace ClipBox
             }
             catch (System.Exception e)
             {
-                Helper.oEditor.WriteMessage(e.Message);
+                Helper.oEditor.WriteMessage(e.Message + ", " + e.StackTrace);
 
             }
             finally { Helper.Terminate(); }
         }
 
-        public static Point3d midpoint(Entity elem)
+        public static Point3d midpoint(Entity elem, Entity elem2)
         {
             Extents3d elembounds = elem.Bounds.Value;
+            if (elem2 != null) elembounds.AddExtents(elem2.Bounds.Value);
             Point3d ebmin = elembounds.MinPoint;
             Point3d ebmax = elembounds.MaxPoint;
             Point3d ebmid = (new LineSegment3d(ebmin, ebmax)).MidPoint;
@@ -288,7 +293,23 @@ namespace ClipBox
             return lenDiag;
         }
 
-        public static void createBox()
+        public static Point3d getScales(Entity elem, Entity elem2)
+        {
+            Extents3d elembounds = elem.Bounds.Value;
+            if (elem2 != null) elembounds.AddExtents(elem2.Bounds.Value);
+            Point3d ebmin = elembounds.MinPoint;
+            Point3d ebmax = elembounds.MaxPoint;
+            double sx = Math.Abs(ebmax.X - ebmin.X);
+            double sy = Math.Abs(ebmax.Y - ebmin.Y);
+            double sz = Math.Abs(ebmax.Z - ebmin.Z);
+            if (sx == 0) sx = 1;
+            if (sy == 0) sy = 1;
+            if (sz == 0) sz = 1;
+            Point3d s = new Point3d(sx, sy, sz);
+            return s;
+        }
+
+        public static void createBox(Point3d s)
         {
             string sLayerName = "clipbox";
             // Get the current document and database
@@ -313,7 +334,7 @@ namespace ClipBox
                 using (Solid3d thesolid = new Solid3d())
                 {
                     thesolid.RecordHistory = true;
-                    thesolid.CreateBox(1, 1, 1);
+                    thesolid.CreateBox(s.X, s.Y, s.Z);
                     thesolid.Layer = sLayerName;
 
                     acBlkTblRec.AppendEntity(thesolid);
@@ -473,6 +494,17 @@ namespace ClipBox
             try
             {
                 Helper.Initialize();
+                String dwgDirectory = "";
+                PromptResult pr = Helper.oEditor.GetString("\nplease enter project dwg path: ");
+
+                if (pr.Status == PromptStatus.OK && Directory.Exists(pr.StringResult))
+                {
+                    dwgDirectory = pr.StringResult;
+                }
+                else
+                {
+                    Helper.oEditor.WriteMessage("\nno dwg path given, using Plant 3D models folder");
+                }
 
                 detachallxrefs();
 
@@ -490,13 +522,23 @@ namespace ClipBox
                     return;
                 }
 
-                List<string> xrefs = getIntersectingXrefList();
-                using (Transaction tr = Helper.oDatabase.TransactionManager.StartOpenCloseTransaction())
-                {
-                    foreach (string xrefPath in xrefs)
-                    {
+                List<string> xrefs = getIntersectingXrefList(dwgDirectory);
 
-                        ObjectId xrefObj = Helper.oDatabase.OverlayXref(xrefPath, xrefPath.Substring(xrefPath.LastIndexOf("\\")));
+
+                foreach (string xrefPath in xrefs)
+                {
+                    using (Transaction tr = Helper.oDatabase.TransactionManager.StartOpenCloseTransaction())
+                    {
+                        string blockname = String.Empty;
+                        if (xrefPath.IndexOf("/") != -1)
+                        {
+                            blockname = xrefPath.Substring(xrefPath.LastIndexOf("/"));
+                        }
+                        else
+                        {
+                            blockname = xrefPath.Substring(xrefPath.LastIndexOf("\\"));
+                        }
+                        ObjectId xrefObj = Helper.oDatabase.OverlayXref(xrefPath, blockname);
                         if (!xrefObj.IsNull)
                         {
                             using (BlockReference br = new BlockReference(new Point3d(0, 0, 0), xrefObj))
@@ -507,11 +549,11 @@ namespace ClipBox
                             }
 
                         }
-
+                        tr.Commit();
                     }
-
-                    tr.Commit();
                 }
+
+
 
 
             }
@@ -524,12 +566,15 @@ namespace ClipBox
                 Helper.oEditor.WriteMessage("message: " + e.Message);
 
             }
-            finally { Helper.Terminate(); }
+            finally
+            {
+                Helper.Terminate();
+            }
 
         }
 
 
-        public static List<string> getIntersectingXrefList()
+        public static List<string> getIntersectingXrefList(string dwgdir)
         {
             List<string> resultList = new List<string>();
             try
@@ -537,19 +582,26 @@ namespace ClipBox
                 Extents3d thext = getBoxExtends();
                 Point3d amin = thext.MinPoint;
                 Point3d amax = thext.MaxPoint;
+                string[] dwgList = null;
 
-                string dwgdir = Helper.PlantProject.ProjectDwgDirectory;
-                dwgdir = dwgdir.Substring(0, dwgdir.LastIndexOf(Path.DirectorySeparatorChar));
-                //System.Collections.Generic.List<PnPProjectDrawing> dwgList = Helper.PlantProject.GetPnPDrawingFiles();
-                //string[] dwgList = Directory.GetFiles("D:\\Documents\\BASF2018\\pdms", "*.dwg");
-                string[] dwgList = Directory.GetFiles(dwgdir + Path.DirectorySeparatorChar + "pdms", "*.dwg");
+                if (dwgdir.Equals(String.Empty))
+                {
+                    System.Collections.Generic.List<PnPProjectDrawing> dwgListp = Helper.PlantProject.GetPnPDrawingFiles();
+                    List<string> dwgListp2 = new List<string>();
+                    foreach (PnPProjectDrawing dwgp in dwgListp)
+                    {
+                        dwgListp2.Add(dwgp.ResolvedFilePath);
+                    }
+                    dwgList = dwgListp2.ToArray();
+                }
+                else
+                {
+                    dwgList = Directory.GetFiles(dwgdir, "*.dwg");
+                }
 
                 //foreach (PnPProjectDrawing dwg in dwgList)
-                foreach (string dwg in dwgList)
+                foreach (string thepath in dwgList)
                 {
-                    string thepath = dwg;
-                    //string thepath = dwg.ResolvedFilePath;
-
                     if (thepath.Equals(Helper.ActiveDocument.Name))
                         continue;
 
@@ -562,11 +614,11 @@ namespace ClipBox
                     bool writebounds = true;
 
                     Helper.oEditor.WriteMessage("\nchecking file: " + thepath);
-                    int numobj = 0;                    
+                    int numobj = 0;
 
                     if (File.Exists(thepath + ".bounds"))
                     {
-                        DateTime dwgtime = File.GetLastWriteTime(dwg);
+                        DateTime dwgtime = File.GetLastWriteTime(thepath);
                         DateTime cachedtime = File.GetLastWriteTime(thepath + ".bounds");
 
                         if (dwgtime < cachedtime)
@@ -587,7 +639,7 @@ namespace ClipBox
 
                     using (Database sideDb = new Database(false, true))
                     {
-                        
+
 
                         // read the dwg file
                         //file open cannot be read
@@ -672,7 +724,7 @@ namespace ClipBox
                         }
                     }
                     //write boundsfile
-                    if (!File.Exists(thepath + ".bounds") && writebounds && numobj > 0)
+                    if (writebounds && numobj > 0)
                     {
                         File.WriteAllText(thepath + ".bounds", minx + "\n" + miny + "\n" + minz + "\n" + maxx + "\n" + maxy + "\n" + maxz);
                     }
