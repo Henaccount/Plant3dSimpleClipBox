@@ -18,6 +18,7 @@ action: box visible preparebox selection = clipbox at selection
             box invisible preparebox selection = make visible last used clipbox
             box visible preparebox noselection = end clipping, make clipbox invisible
 Known issues: If you find yourself suddenly in the middle of a xlcip command, then you didn’t exactly follow the intended workflow. In this case just click “Esc” several times. Use orthomode off (F8 to switch on/off), better for resizing the box
+Update: you can now select 2 objects to define the box
 
 <b>command: clipping</b>
 action: box prepared clipping = clip the box
@@ -27,6 +28,7 @@ Known issues: Depending on how the xclip command was used before, things might b
 prerequisites: In the project, ALWAYS use overlay when attaching xrefs! Detach all xrefs.
 action: box prepared loadRequiredXrefs = find required xrefs and load them.
 Known issues: Possibly proxy objects from other programs (zombie objects) will disturb the program, has to be tested. Just “Plant 3d Drawings” are searched, not the “Related Files”
+Update: there is some sort of caching now to speed up the command, so there will be a .bounds file per DWG, you will also be asked for a path, but you can just click enter on a Plant project
 
 <h2>License</h2>
 This sample is licensed under the terms of the <a href="http://opensource.org/licenses/MIT">MIT License</a>. Please see the <a href="https://github.com/Henaccount/Plant3dSimpleClipBox/blob/master/LICENSE">LICENSE</a> file for full details.
