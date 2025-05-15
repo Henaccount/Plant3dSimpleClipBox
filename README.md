@@ -11,8 +11,6 @@ This tool is example code to show you how you could work more efficiently. It is
 
 # Manual for ClipBox.dll for Plant3d
 
-see this article about how to compile and install: http://autode.sk/2jYKHJy
-
 <b>command: preparebox</b>
 action: box visible preparebox selection = clipbox at selection
             box invisible preparebox selection = make visible last used clipbox
