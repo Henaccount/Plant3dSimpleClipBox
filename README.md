@@ -1,4 +1,4 @@
-# Plant3dSimpleClipBox
+# Plant3dSimpleClipBox - Sample Code: use at own risk!
 Clipping the drawing area for easier access to the relevant parts for the 3D designer
 
 Clipbox is a well known tool for many 3D applications. Attached you see an approach to do the same thing in Plant 3D.
