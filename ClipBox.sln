@@ -1,26 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2012 for Windows Desktop
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClipBox", "ClipBox\ClipBox.csproj", "{36D96668-9ECF-4758-95AA-CCE8F3CFB768}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36408.4 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClipBox", "ClipBox\ClipBox.csproj", "{E66BC5F0-3600-065E-9F65-E5028695E498}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
-		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{36D96668-9ECF-4758-95AA-CCE8F3CFB768}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{36D96668-9ECF-4758-95AA-CCE8F3CFB768}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{36D96668-9ECF-4758-95AA-CCE8F3CFB768}.Debug|x64.ActiveCfg = Debug|x64
-		{36D96668-9ECF-4758-95AA-CCE8F3CFB768}.Debug|x64.Build.0 = Debug|x64
-		{36D96668-9ECF-4758-95AA-CCE8F3CFB768}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{36D96668-9ECF-4758-95AA-CCE8F3CFB768}.Release|Any CPU.Build.0 = Release|Any CPU
-		{36D96668-9ECF-4758-95AA-CCE8F3CFB768}.Release|x64.ActiveCfg = Release|x64
-		{36D96668-9ECF-4758-95AA-CCE8F3CFB768}.Release|x64.Build.0 = Release|x64
+		{E66BC5F0-3600-065E-9F65-E5028695E498}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E66BC5F0-3600-065E-9F65-E5028695E498}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E66BC5F0-3600-065E-9F65-E5028695E498}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E66BC5F0-3600-065E-9F65-E5028695E498}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4CA8CE7E-14EE-497B-B419-26265CCA1475}
 	EndGlobalSection
 EndGlobal
