@@ -1,6 +1,8 @@
 # Plant3dSimpleClipBox - Sample Code: use at own risk!
 Clipping the drawing area for easier access to the relevant parts for the 3D designer
 
+<table border=1 bordercolor=red><tr><td>Update! A potential better version with interface is available here: https://github.com/Henaccount/Plant3DClipBox/blob/master/README.md</td></tr></table>
+
 Clipbox is a well known tool for many 3D applications. Attached you see an approach to do the same thing in Plant 3D.
 It is trying to solve the task in the most simple way. It is using the "isolate" Plant command and the "xclip" AutoCAD command.
 That's why in shaded mode, if you xclip xrefs you will get problems with the snaps, so you need to go to wireframe to get the expected snaps.
